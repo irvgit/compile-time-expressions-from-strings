@@ -271,8 +271,8 @@ namespace cte {
                                     auto constexpr static s_optional_argument = std::get<1>(s_result); //not needed after above
                                     if constexpr (std::same_as<function_call_end_t, std::remove_const_t<std::tuple_element_t<2, decltype(s_result)>>>) {
                                         decltype(auto) constexpr static s_invocation_return_value = std::apply([](auto&&... p_optional_argument) -> decltype(auto) {
-                                            static_assert(requires { s_callee(tp_arguments..., p_optional_argument...); }, "no matching call to function '"s + std::ranges::to<std::string>(function_or_variable_identifier<s_callee>) + '\'');
-                                            static_assert(!requires { { s_callee(tp_arguments..., p_optional_argument...) } -> std::same_as<void>; }, "function '"s + std::ranges::to<std::string>(function_or_variable_identifier<s_callee>) + "' must return a value/return type must not be of type 'void'");
+                                            static_assert(requires { s_callee(tp_arguments..., p_optional_argument...); }, "no matching call to function '"s + std::ranges::to<std::string>(function_or_variable_identifier<stogap_pack_index<s_value_count - 1>(tp_values...)>) + '\'');
+                                            static_assert(!requires { { s_callee(tp_arguments..., p_optional_argument...) } -> std::same_as<void>; }, "function '"s + std::ranges::to<std::string>(function_or_variable_identifier<stogap_pack_index<s_value_count - 1>(tp_values...)>) + "' must return a value/return type must not be of type 'void'");
                                             return s_callee(tp_arguments..., p_optional_argument...);
                                         }, s_optional_argument);
                                         return std::pair<decltype(s_next_index), decltype(s_invocation_return_value)>{s_next_index, s_invocation_return_value};
