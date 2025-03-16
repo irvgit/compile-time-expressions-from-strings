@@ -289,7 +289,7 @@ namespace cte {
                                 return []<std::size_t... tp_is>(std::index_sequence<tp_is...>, auto&& p_outer) {
                                     auto constexpr static s_invocation_return_value = [] {
                                         static_assert(s_value_count >= (s_current_token.m_is_special ? 1 : 2), "expected an expression");
-                                        if constexpr (std::ranges::equal(s_current_token.m_value, "+"sv)) {
+                                        if constexpr (s_current_token.is('+')) {
                                             if constexpr (s_current_token.m_is_special)
                                                 static_assert(requires { +stogap_pack_index<s_value_count - 1>(tp_values...); }, "no matching call to operator+");
                                             else static_assert(requires { stogap_pack_index<s_value_count - 2>(tp_values...) + stogap_pack_index<s_value_count - 1>(tp_values...); }, "no matching call to operator+");
@@ -297,7 +297,7 @@ namespace cte {
                                                 return +stogap_pack_index<s_value_count - 1>(tp_values...);
                                             else return stogap_pack_index<s_value_count - 2>(tp_values...) + stogap_pack_index<s_value_count - 1>(tp_values...);
                                         }
-                                        else if constexpr (std::ranges::equal(s_current_token.m_value, "-"sv)) {
+                                        else if constexpr (s_current_token.is('-')) {
                                             if constexpr (s_current_token.m_is_special)
                                                 static_assert(requires { -stogap_pack_index<s_value_count - 1>(tp_values...); }, "no matching call to operator-");
                                             else static_assert(requires { stogap_pack_index<s_value_count - 2>(tp_values...) - stogap_pack_index<s_value_count - 1>(tp_values...); }, "no matching call to operator-");
@@ -305,7 +305,7 @@ namespace cte {
                                                 return -stogap_pack_index<s_value_count - 1>(tp_values...);
                                             else return stogap_pack_index<s_value_count - 2>(tp_values...) - stogap_pack_index<s_value_count - 1>(tp_values...);
                                         }
-                                        else if constexpr (std::ranges::equal(s_current_token.m_value, "*"sv)) {
+                                        else if constexpr (s_current_token.is('*')) {
                                             if constexpr (s_current_token.m_is_special)
                                                 static_assert(requires { *stogap_pack_index<s_value_count - 1>(tp_values...); }, "no matching call to operator*");
                                             else static_assert(requires { stogap_pack_index<s_value_count - 2>(tp_values...) * stogap_pack_index<s_value_count - 1>(tp_values...); }, "no matching call to operator*");
@@ -313,15 +313,15 @@ namespace cte {
                                                 return *stogap_pack_index<s_value_count - 1>(tp_values...);
                                             else return stogap_pack_index<s_value_count - 2>(tp_values...) * stogap_pack_index<s_value_count - 1>(tp_values...);
                                         }
-                                        else if constexpr (std::ranges::equal(s_current_token.m_value, "/"sv)) {
+                                        else if constexpr (s_current_token.is('/')) {
                                             static_assert(requires { stogap_pack_index<s_value_count - 2>(tp_values...) / stogap_pack_index<s_value_count - 1>(tp_values...); }, "no matching call to operator/");
                                             return stogap_pack_index<s_value_count - 2>(tp_values...) / stogap_pack_index<s_value_count - 1>(tp_values...);
                                         }
-                                        else if constexpr (std::ranges::equal(s_current_token.m_value, "%"sv)) {
+                                        else if constexpr (s_current_token.is('%')) {
                                             static_assert(requires { stogap_pack_index<s_value_count - 2>(tp_values...) % stogap_pack_index<s_value_count - 1>(tp_values...); }, "no matching call to operator%");
                                             return stogap_pack_index<s_value_count - 2>(tp_values...) % stogap_pack_index<s_value_count - 1>(tp_values...);
                                         }
-                                        else if constexpr (std::ranges::equal(s_current_token.m_value, "^"sv)) {
+                                        else if constexpr (s_current_token.is('^')) {
                                             static_assert(requires { stogap_pack_index<s_value_count - 2>(tp_values...) ^ stogap_pack_index<s_value_count - 1>(tp_values...); }, "no matching call to operator^");
                                             return stogap_pack_index<s_value_count - 2>(tp_values...) ^ stogap_pack_index<s_value_count - 1>(tp_values...);
                                         }
