@@ -263,27 +263,29 @@ namespace cte {
                                 auto constexpr static && s_callee = stogap_pack_index<s_value_count - 1>(tp_values...);
                                 //switch to c++26's constexpr static structured binding:
                                 // auto constexpr static [s_next_index, s_function_invocation_result] = the lambda below;
-                                auto constexpr static s_function_invocation_result = []<std::size_t tp_jndex, auto&&... tp_arguments>(this auto p_self) -> decltype(auto) {
+                                return []<std::size_t tp_jndex, auto&&... tp_arguments>(this auto p_self) -> decltype(auto) {
                                     //switch to c++26's constexpr static structured binding with a placeholder:
                                     // auto constexpr static [s_next_index, s_optional_argument, _] = s_outer.template operator()<tp_jndex>();
                                     auto constexpr static s_result            = s_outer.template operator()<tp_jndex>(); //use constexpr structured bindings here
                                     auto constexpr static s_next_index        = std::get<0>(s_result); //not needed after above
                                     auto constexpr static s_optional_argument = std::get<1>(s_result); //not needed after above
                                     if constexpr (std::same_as<function_call_end_t, std::remove_const_t<std::tuple_element_t<2, decltype(s_result)>>>) {
-                                        decltype(auto) constexpr static s_invocation_return_value = std::apply([](auto&&... p_optional_argument) -> decltype(auto) {
-                                            static_assert(requires { s_callee(tp_arguments..., p_optional_argument...); }, "no matching call to function '"s + std::ranges::to<std::string>(function_or_variable_identifier<stogap_pack_index<s_value_count - 1>(tp_values...)>) + '\'');
-                                            static_assert(!requires { { s_callee(tp_arguments..., p_optional_argument...) } -> std::same_as<void>; }, "function '"s + std::ranges::to<std::string>(function_or_variable_identifier<stogap_pack_index<s_value_count - 1>(tp_values...)>) + "' must return a value/return type must not be of type 'void'");
-                                            return s_callee(tp_arguments..., p_optional_argument...);
-                                        }, s_optional_argument);
-                                        return std::pair<decltype(s_next_index), decltype(s_invocation_return_value)>{s_next_index, s_invocation_return_value};
+                                        auto constexpr static s_invoke = [] -> decltype(auto) {
+                                            return std::apply([](auto&&... p_optional_argument) -> decltype(auto) {
+                                                static_assert(requires { s_callee(tp_arguments..., p_optional_argument...); }, "no matching call to function '"s + std::ranges::to<std::string>(function_or_variable_identifier<stogap_pack_index<s_value_count - 1>(tp_values...)>) + '\'');
+                                                static_assert(!requires { { s_callee(tp_arguments..., p_optional_argument...) } -> std::same_as<void>; }, "function '"s + std::ranges::to<std::string>(function_or_variable_identifier<stogap_pack_index<s_value_count - 1>(tp_values...)>) + "' must return a value/return type must not be of type 'void'");
+                                                return s_callee(tp_arguments..., p_optional_argument...);
+                                            }, s_optional_argument);
+                                        };
+                                        if constexpr (s_next_index == std::ranges::size(s_tokens_arranged))
+                                            return s_invoke();
+                                        else return []<std::size_t... tp_is>(std::index_sequence<tp_is...>) -> decltype(auto) {
+                                            decltype(auto) constexpr static s_invocation_return_value = s_invoke();
+                                            return s_outer.template operator()<s_next_index, stogap_pack_index<tp_is>(tp_values...)..., s_invocation_return_value>();
+                                        }(std::make_index_sequence<s_value_count - 1>{});
                                     }
                                     else return p_self.template operator()<s_next_index, tp_arguments..., std::get<0>(s_optional_argument)>();
                                 }.template operator()<tp_index + 1>();
-                                if constexpr (s_function_invocation_result.first == std::ranges::size(s_tokens_arranged))
-                                    return s_function_invocation_result.second;
-                                else return []<std::size_t... tp_is>(std::index_sequence<tp_is...>) -> decltype(auto) {
-                                    return s_outer.template operator()<s_function_invocation_result.first, stogap_pack_index<tp_is>(tp_values...)..., s_function_invocation_result.second>();
-                                }(std::make_index_sequence<s_value_count - 1>{});
                             }
                             else if constexpr (s_current_token.is_operator()) {
                                 return []<std::size_t... tp_is>(std::index_sequence<tp_is...>, auto&& p_outer) {
