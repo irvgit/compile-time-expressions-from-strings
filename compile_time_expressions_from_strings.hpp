@@ -118,7 +118,7 @@ namespace cte {
         auto constexpr function_call_end = function_call_end_t{};
 
         template <std::array tp_input, auto&&... tp_functions_and_variables>
-        decltype(auto) constexpr evaluate_expression_impl = [] -> decltype(auto) {
+        auto constexpr evaluate_expression_impl = [] -> decltype(auto) {
             if constexpr (std::ranges::empty(tp_input) || (std::ranges::size(tp_input) == 1 && tp_input.back() == '\0')) {
                 static_assert(false, "input data was empty");
                 return invalid_expression;
@@ -369,10 +369,35 @@ namespace cte {
                     }.template operator()<0>();
                 }
             }
-        }();
+        };
+        template <detail::string tp_input, auto&&... tp_functions_and_variables>
+        using expression_evaluation_t = decltype(evaluate_expression_impl<tp_input.m_data, tp_functions_and_variables...>());
+        template <string tp_input, auto&&... tp_functions_and_variables>
+        concept evaluable = !requires { { evaluate_expression_impl<tp_input.m_data, tp_functions_and_variables...>() } -> std::same_as<invalid_expression_t>; };
+        template <string tp_input, auto&&... tp_functions_and_variables>
+        concept evaluation_result_trivial = std::is_trivially_copyable_v<expression_evaluation_t<tp_input, tp_functions_and_variables...>>;
     }
     template <detail::string tp_input, auto&&... tp_functions_and_variables>
-    requires (!requires { { detail::evaluate_expression_impl<tp_input.m_data, tp_functions_and_variables...> } -> std::same_as<detail::invalid_expression_t>; })
-    decltype(auto) constexpr evaluate_expression = detail::evaluate_expression_impl<tp_input.m_data, tp_functions_and_variables...>;
+    using expression_evaluation_t = detail::expression_evaluation_t<tp_input, tp_functions_and_variables...>;
+
+    template <detail::string tp_input, auto&&... tp_functions_and_variables>
+    concept evaluable = detail::evaluable<tp_input, tp_functions_and_variables...>;
+
+    template <detail::string tp_input, auto&&... tp_functions_and_variables>
+    requires (detail::evaluable<tp_input, tp_functions_and_variables...>)
+    auto constexpr evaluate_expression = detail::evaluate_expression_impl<tp_input.m_data, tp_functions_and_variables...>;
+    
+    template <detail::string tp_input, auto&&... tp_functions_and_variables>
+    requires (
+        detail::evaluable<tp_input, tp_functions_and_variables...> &&
+        detail::evaluation_result_trivial<tp_input, tp_functions_and_variables...>
+    )
+    decltype(auto) constexpr expression_evaluation = [] {
+        if constexpr (!detail::evaluation_result_trivial<tp_input, tp_functions_and_variables...>) {
+            static_assert(false, "return type must be trivially copyable, use evaluate_expression instead for copy elision in-place");
+            return detail::invalid_expression;
+        }
+        else return evaluate_expression<tp_input.m_data, tp_functions_and_variables...>();
+    }();
 }
 #endif
